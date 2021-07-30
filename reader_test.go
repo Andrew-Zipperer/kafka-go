@@ -303,6 +303,10 @@ func createTopic(t *testing.T, topic string, partitions int) {
 		t.Error(err)
 		t.FailNow()
 	}
+
+	t.Cleanup(func() {
+		deleteTopic(t, topic)
+	})
 }
 
 func deleteTopic(t *testing.T, topic ...string) {
