@@ -343,9 +343,15 @@ func waitForTopic(ctx context.Context, t *testing.T, topic string) {
 			t.Fatalf("waitForTopic: error listing topics: %s", err.Error())
 		}
 
-		if len(response.Topics) > 0 {
-			t.Logf("waitForTopic: topic found: %q", topic)
-			return
+		// Find a topic which has at least 1 partition in the metadata response
+		for _, top := range response.Topics {
+			if top.Name != topic {
+				continue
+			}
+			if len(top.Partitions) > 0 {
+				t.Logf("waitForTopic: found topic %q in %+v", topic, response.Topics)
+				return
+			}
 		}
 
 		t.Logf("retrying after 1s")
@@ -374,7 +380,7 @@ func deleteTopic(t *testing.T, topic ...string) {
 	conn.SetDeadline(time.Now().Add(2 * time.Second))
 
 	if err := conn.DeleteTopics(topic...); err != nil {
-		t.Fatal(err)
+		t.Logf("deleteTopic: error deleting %v: %s", topic, err.Error())
 	}
 }
 

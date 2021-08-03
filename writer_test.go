@@ -149,6 +149,7 @@ func TestWriter(t *testing.T) {
 		t.Run(test.scenario, func(t *testing.T) {
 			// run test against deprecated constructor style
 			t.Run("constructor", func(t *testing.T) {
+				t.Parallel()
 
 				cfg := WriterConfig{
 					Balancer:     test.writer.Balancer,
@@ -156,9 +157,11 @@ func TestWriter(t *testing.T) {
 					BatchBytes:   int(test.writer.BatchBytes),
 					BatchSize:    test.writer.BatchSize,
 					BatchTimeout: test.writer.BatchTimeout,
+					Logger:       &testKafkaLogger{T: t},
 				}
+
 				if test.setTopic {
-					cfg.Topic = makeTopic()
+					cfg.Topic = makeTopicT(t)
 				}
 				if test.createTopic {
 					createTopic(t, cfg.Topic, test.partitions)
@@ -178,9 +181,13 @@ func TestWriter(t *testing.T) {
 
 			// run test against struct literal style
 			t.Run("literal", func(t *testing.T) {
+				t.Parallel()
+
 				w := test.writer
+				w.Logger = &testKafkaLogger{T: t}
+
 				if test.setTopic {
-					w.Topic = makeTopic()
+					w.Topic = makeTopicT(t)
 				}
 				if test.createTopic {
 					createTopic(t, w.Topic, test.partitions)
@@ -216,7 +223,7 @@ func testWriterClose(t *testing.T, w *Writer) {
 // Converting to standalone test since constructor does not support Transport
 // configuration
 func TestWriterRequiredAcksNone(t *testing.T) {
-	topic := makeTopic()
+	topic := makeTopicT(t)
 	createTopic(t, topic, 1)
 
 	transport := &Transport{}
@@ -549,7 +556,7 @@ func testWriterSmallBatchBytes(t *testing.T, w *Writer) {
 
 func testWriterMultipleTopics(t *testing.T, w *Writer) {
 
-	topic1 := makeTopic()
+	topic1 := makeTopicT(t)
 	createTopic(t, topic1, 1)
 	t.Cleanup(func() {
 		deleteTopic(t, topic1)
@@ -560,7 +567,7 @@ func testWriterMultipleTopics(t *testing.T, w *Writer) {
 		t.Fatal(err)
 	}
 
-	topic2 := makeTopic()
+	topic2 := makeTopicT(t)
 	createTopic(t, topic2, 1)
 	t.Cleanup(func() {
 		deleteTopic(t, topic2)
