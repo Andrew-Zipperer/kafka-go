@@ -3,6 +3,7 @@ package kafka
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -498,7 +499,7 @@ func testConnSeekDontCheck(t *testing.T, conn *Conn) {
 		t.Error("bad offset:", offset)
 	}
 
-	if _, err := conn.ReadMessage(1024); err != OffsetOutOfRange {
+	if _, err := conn.ReadMessage(1024); !errors.Is(err, OffsetOutOfRange) {
 		t.Error("unexpected error:", err)
 	}
 }
