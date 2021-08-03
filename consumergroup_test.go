@@ -3,8 +3,6 @@ package kafka
 import (
 	"context"
 	"errors"
-	"log"
-	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -95,17 +93,114 @@ func TestValidateConsumerGroupConfig(t *testing.T) {
 		errorOccured bool
 	}{
 		{config: ConsumerGroupConfig{}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, HeartbeatInterval: 2}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: -1}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", SessionTimeout: -1}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: -1}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: 2, RebalanceTimeout: -2}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: 2, RebalanceTimeout: 2, RetentionTime: -1}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: 2, RebalanceTimeout: 2, RetentionTime: 1, StartOffset: 123}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: 2, RebalanceTimeout: 2, RetentionTime: 1, PartitionWatchInterval: -1}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: 2, RebalanceTimeout: 2, RetentionTime: 1, PartitionWatchInterval: 1, JoinGroupBackoff: -1}, errorOccured: true},
-		{config: ConsumerGroupConfig{Brokers: []string{"broker1"}, Topics: []string{"t1"}, ID: "group1", HeartbeatInterval: 2, SessionTimeout: 2, RebalanceTimeout: 2, RetentionTime: 1, PartitionWatchInterval: 1, JoinGroupBackoff: 1}, errorOccured: false},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:           []string{"broker1"},
+				HeartbeatInterval: 2,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers: []string{"broker1"},
+				Topics:  []string{"t1"},
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:           []string{"broker1"},
+				Topics:            []string{"t1"},
+				ID:                "group1",
+				HeartbeatInterval: -1,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:        []string{"broker1"},
+				Topics:         []string{"t1"},
+				ID:             "group1",
+				SessionTimeout: -1,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:           []string{"broker1"},
+				Topics:            []string{"t1"},
+				ID:                "group1",
+				HeartbeatInterval: 2,
+				SessionTimeout:    -1,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:           []string{"broker1"},
+				Topics:            []string{"t1"},
+				ID:                "group1",
+				HeartbeatInterval: 2,
+				SessionTimeout:    2,
+				RebalanceTimeout:  -2,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:           []string{"broker1"},
+				Topics:            []string{"t1"},
+				ID:                "group1",
+				HeartbeatInterval: 2,
+				SessionTimeout:    2,
+				RebalanceTimeout:  2,
+				RetentionTime:     -1,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:           []string{"broker1"},
+				Topics:            []string{"t1"},
+				ID:                "group1",
+				HeartbeatInterval: 2,
+				SessionTimeout:    2,
+				RebalanceTimeout:  2,
+				RetentionTime:     1,
+				StartOffset:       123,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:                []string{"broker1"},
+				Topics:                 []string{"t1"},
+				ID:                     "group1",
+				HeartbeatInterval:      2,
+				SessionTimeout:         2,
+				RebalanceTimeout:       2,
+				RetentionTime:          1,
+				PartitionWatchInterval: -1,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:                []string{"broker1"},
+				Topics:                 []string{"t1"},
+				ID:                     "group1",
+				HeartbeatInterval:      2,
+				SessionTimeout:         2,
+				RebalanceTimeout:       2,
+				RetentionTime:          1,
+				PartitionWatchInterval: 1,
+				JoinGroupBackoff:       -1,
+			}, errorOccured: true,
+		},
+		{
+			config: ConsumerGroupConfig{
+				Brokers:                []string{"broker1"},
+				Topics:                 []string{"t1"},
+				ID:                     "group1",
+				HeartbeatInterval:      2,
+				SessionTimeout:         2,
+				RebalanceTimeout:       2,
+				RetentionTime:          1,
+				PartitionWatchInterval: 1,
+				JoinGroupBackoff:       1,
+			}, errorOccured: false,
+		},
 	}
 	for _, test := range tests {
 		err := test.config.Validate()
@@ -322,7 +417,7 @@ func TestConsumerGroup(t *testing.T) {
 				HeartbeatInterval: 2 * time.Second,
 				RebalanceTimeout:  2 * time.Second,
 				RetentionTime:     time.Hour,
-				Logger:            log.New(os.Stdout, "cg-test: ", 0),
+				Logger:            &testKafkaLogger{T: t},
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -568,7 +663,7 @@ func TestConsumerGroupErrors(t *testing.T) {
 				connect: func(*Dialer, ...string) (coordinator, error) {
 					return mc, nil
 				},
-				Logger: log.New(os.Stdout, "cg-errors-test: ", 0),
+				Logger: &testKafkaLogger{T: t},
 			})
 			if err != nil {
 				t.Fatal(err)

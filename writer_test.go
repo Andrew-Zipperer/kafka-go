@@ -162,7 +162,7 @@ func TestWriter(t *testing.T) {
 				}
 
 				if test.setTopic {
-					cfg.Topic = makeTopicT(t)
+					cfg.Topic = makeTestTopic(t)
 				}
 				if test.createTopic {
 					createTopic(t, cfg.Topic, test.partitions)
@@ -188,7 +188,7 @@ func TestWriter(t *testing.T) {
 				w.Logger = &testKafkaLogger{T: t}
 
 				if test.setTopic {
-					w.Topic = makeTopicT(t)
+					w.Topic = makeTestTopic(t)
 				}
 				if test.createTopic {
 					createTopic(t, w.Topic, test.partitions)
@@ -224,7 +224,7 @@ func testWriterClose(t *testing.T, w *Writer) {
 // Converting to standalone test since constructor does not support Transport
 // configuration
 func TestWriterRequiredAcksNone(t *testing.T) {
-	topic := makeTopicT(t)
+	topic := makeTestTopic(t)
 	createTopic(t, topic, 1)
 
 	transport := &Transport{}
@@ -561,7 +561,7 @@ func testWriterSmallBatchBytes(t *testing.T, w *Writer) {
 
 func testWriterMultipleTopics(t *testing.T, w *Writer) {
 
-	topic1 := makeTopicT(t)
+	topic1 := makeTestTopic(t)
 	createTopic(t, topic1, 1)
 	t.Cleanup(func() {
 		deleteTopic(t, topic1)
@@ -572,7 +572,7 @@ func testWriterMultipleTopics(t *testing.T, w *Writer) {
 		t.Fatal(err)
 	}
 
-	topic2 := makeTopicT(t)
+	topic2 := makeTestTopic(t)
 	createTopic(t, topic2, 1)
 	t.Cleanup(func() {
 		deleteTopic(t, topic2)
