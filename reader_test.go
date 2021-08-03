@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -314,10 +313,6 @@ func createTopic(t *testing.T, topic string, partitions int) {
 		t.FailNow()
 	}
 
-	t.Cleanup(func() {
-		deleteTopic(t, topic)
-	})
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -335,25 +330,27 @@ func waitForTopic(ctx context.Context, t *testing.T, topic string) {
 		default:
 		}
 
-		w := Writer{
-			Addr:  TCP("localhost:9092"),
-			Topic: topic,
+		cli := &Client{
+			Addr:    TCP("localhost:9092"),
+			Timeout: 5 * time.Second,
 		}
-		t.Cleanup(func() {
-			w.Close()
+
+		response, err := cli.Metadata(ctx, &MetadataRequest{
+			Addr:   cli.Addr,
+			Topics: []string{topic},
 		})
-		err := w.WriteMessages(ctx, Message{Value: []byte(t.Name())})
-		if err == nil {
+		if err != nil {
+			t.Fatalf("waitForTopic: error listing topics: %s", err.Error())
+		}
+
+		if len(response.Topics) > 0 {
 			t.Logf("waitForTopic: topic found: %q", topic)
-			break
+			return
 		}
-		t.Logf("waitForTopic: error in WriteMessages: %s", err.Error())
-		if errors.Is(UnknownTopicOrPartition, err) {
-			t.Logf("retrying after 1s")
-			time.Sleep(time.Second)
-			continue
-		}
-		t.Fatalf("unexpected error waiting for topic: %s", err.Error())
+
+		t.Logf("retrying after 1s")
+		time.Sleep(time.Second)
+		continue
 	}
 }
 
