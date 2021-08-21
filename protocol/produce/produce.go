@@ -3,7 +3,7 @@ package produce
 import (
 	"fmt"
 
-	"github.com/segmentio/kafka-go/protocol"
+	"github.com/Andrew-Zipperer/kafka-go/protocol"
 )
 
 func init() {

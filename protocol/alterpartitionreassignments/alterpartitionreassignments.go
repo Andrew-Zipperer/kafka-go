@@ -1,6 +1,6 @@
 package alterpartitionreassignments
 
-import "github.com/segmentio/kafka-go/protocol"
+import "github.com/Andrew-Zipperer/kafka-go/protocol"
 
 func init() {
 	protocol.Register(&Request{}, &Response{})
